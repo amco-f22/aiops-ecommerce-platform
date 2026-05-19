@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash([ -d \"$HOME/.claude\" ])",
+      "Bash([ -f \"$HOME/.claude/settings.json\" ])",
+      "PowerShell(npm install *)",
+      "PowerShell(npm search *)",
+      "mcp__awslabs-aws-pricing-mcp-server__get_pricing_service_codes",
+      "mcp__awslabs-eks-mcp-server__list_api_versions"
+    ]
+  }
+}
