@@ -1,6 +1,9 @@
 name: Boutique CI Pipeline
 
 on:
+  push:
+    paths-ignore:
+      - '.planning/**'
   workflow_dispatch:
 
 env:
