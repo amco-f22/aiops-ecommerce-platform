@@ -80,13 +80,25 @@ jobs:
           NEW_TAG=${{ github.sha }}
           ACCOUNT=${{ secrets.AWS_ACCOUNT_ID }}
           REGION=${{ secrets.AWS_REGION }}
+          
+          echo "Updating manifests to tag: $NEW_TAG"
 
           for SERVICE in auth gateway orders order-service product-service user-service; do
             MANIFEST="gitops/k8s/backend/${SERVICE}.yml"
-            sed -i "s|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${SERVICE}:.*|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${SERVICE}:${NEW_TAG}|g" $MANIFEST
+            if [ -f "$MANIFEST" ]; then
+              echo "Updating $MANIFEST for service $SERVICE"
+              # Match any image line containing the service name and update it
+              sed -i "s|image:.*${SERVICE}:.*|image: ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/${SERVICE}:${NEW_TAG}|g" $MANIFEST
+            else
+              echo "Warning: Manifest $MANIFEST not found"
+            fi
           done
 
-          sed -i "s|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/frontend:.*|${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/frontend:${NEW_TAG}|g" gitops/k8s/frontend/deployment.yml
+          FRONTEND_MANIFEST="gitops/k8s/frontend/deployment.yml"
+          if [ -f "$FRONTEND_MANIFEST" ]; then
+            echo "Updating $FRONTEND_MANIFEST for frontend"
+            sed -i "s|image:.*frontend:.*|image: ${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/frontend:${NEW_TAG}|g" $FRONTEND_MANIFEST
+          fi
 
       - name: Commit and push updated manifests
         run: |
