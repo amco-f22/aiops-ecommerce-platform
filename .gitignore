@@ -34,3 +34,6 @@ Thumbs.db
 
 # Environment variables
 .env
+
+# Local only project
+projects/aiops-assistant/
