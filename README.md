@@ -10,6 +10,8 @@ This project demonstrates a production-grade DevOps pipeline from scratch. I des
 
 The goal was to build a system where a single code push flows through the entire lifecycle — from container build to production deployment — without manual intervention, while an AI agent monitors the cluster health in real time.
 
+![Boutique E-Commerce Frontend](docs/assets/boutique-frontend.png)
+
 ### Key Workflows Implemented
 
 | # | Workflow | What It Does |
@@ -303,6 +305,8 @@ kubectl apply -k gitops/
 kubectl get pods -n boutique -w
 ```
 
+![All Pods Running in the Boutique Namespace](docs/assets/cluster-pods-running.png)
+
 **Restore the database:**
 
 The PostgreSQL StatefulSet uses an EBS volume for persistent storage. Due to the `lost+found` directory that exists on fresh EBS volumes, the init script gets skipped. A separate restore Job handles database initialization.
@@ -366,6 +370,8 @@ aws ecr describe-images \
 
 Each image is tagged with the Git commit SHA for full traceability. At any point, you can identify exactly which version is running in production and roll back by redeploying a previous commit SHA.
 
+![GitHub Actions CI Pipeline — All 7 Services Built Successfully](docs/assets/github-actions-pipeline.png)
+
 ---
 
 ### Phase 5 — Configure ArgoCD for GitOps
@@ -416,6 +422,8 @@ The ArgoCD Application manifest (`gitops/argo-cd.yml`) is configured with:
 - **`selfHeal: true`** — If someone manually changes a deployment in the cluster (e.g., changes replicas from 3 to 5), ArgoCD automatically reverts it to match Git
 
 This ensures Git is always the single source of truth for what is running in production.
+
+![ArgoCD Dashboard — All Resources Synced and Healthy](docs/assets/argocd-dashboard.png)
 
 ---
 
