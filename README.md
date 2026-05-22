@@ -21,7 +21,7 @@ The goal was to build a system where a single code push flows through the entire
 | 3 | **CI/CD Pipeline** | GitHub Actions builds 7 Docker images in parallel and pushes them to ECR |
 | 4 | **GitOps Delivery** | ArgoCD watches the Git repository and auto-syncs cluster state on every manifest change |
 | 5 | **Observability** | Prometheus metrics collection + Grafana dashboards with pre-loaded panels for all services |
-| 6 | **AIOps** | AWS Bedrock-powered AI agent (Kira) for automated cluster troubleshooting |
+| 6 | **AIOps** | AWS Bedrock-powered AI agent (Iris) for automated cluster troubleshooting |
 
 ---
 
@@ -148,7 +148,7 @@ aiops-ecommerce-platform/
 │   │   ├── main.tf                   # Root module wiring VPC → EKS → ECR → ArgoCD
 │   │   ├── terraform.tfvars          # Environment-specific values
 │   │   └── modules/                  # vpc/, eks/, ecr/, argocd/
-│   └── aiops-assistant/              # AWS Bedrock AI agent (Kira)
+└── aiops-assistant/              # AWS Bedrock AI agent (Iris)
 │       ├── app.py                    # Streamlit chatbot interface
 │       ├── deploy.sh                 # Bedrock agent deployment script
 │       ├── setup-iam.sh              # IAM role and policy configuration
@@ -171,7 +171,7 @@ aiops-ecommerce-platform/
 | **GitOps** | ArgoCD + Kustomize |
 | **Monitoring** | Prometheus + Grafana |
 | **Log Forwarding** | AWS Fluent Bit → CloudWatch |
-| **AIOps** | AWS Bedrock Agent (Kira) |
+| **AIOps** | AWS Bedrock Agent (Iris) |
 | **AI Assistant** | Claude Code + MCP Servers |
 
 ---

@@ -37,6 +37,42 @@ The project involves a microservices architecture (Node.js/TypeScript) deployed 
     *   Implemented a local workaround using `kubectl port-forward` for the gateway service.
     *   Updated the local `/etc/hosts` file to map `gateway` to `127.0.0.1`.
 
+### 5. EKS Pod Capacity & Scaling
+**Error:** New pods (ArgoCD, Monitoring, Application) stuck in `Pending` with `FailedScheduling` (Too many pods).
+*   **Root Cause:** Single `m7i-flex.large` node reached its VPC CNI pod limit (~29 pods).
+*   **Fix:** Updated `terraform.tfvars` to increase `desired_size` and `min_size` to 2. Applied Terraform changes to scale the cluster node group.
+
+### 6. Missing Application Databases
+**Error:** Backend services failing with `relation "products" does not exist` even after schema restore.
+*   **Root Cause:** The application requires 4 distinct logical databases (`auth_db`, `products_db`, `orders_db`, `users_db`) which were not created by the default PostgreSQL image.
+*   **Fix:** 
+    *   Manually executed SQL commands via `kubectl exec` to create all 4 logical databases.
+    *   Executed the full `20-init-schema.sql` script inside the PostgreSQL pod to initialize tables and seed data across all databases.
+
+### 7. Fluent Bit CloudWatch Logging
+**Error:** Fluent Bit pods failing with `401 Unauthorized` and `Provider returned no credentials`.
+*   **Root Cause:** Two issues: Missing IAM permissions on EKS node role and IMDSv2 access blocked within the cluster network.
+*   **Fix:** 
+    *   Attached `CloudWatchAgentServerPolicy` to the EKS node IAM role via Terraform.
+    *   Updated Fluent Bit Helm chart with `hostNetwork: true` and `dnsPolicy: ClusterFirstWithHostNet` to allow metadata access.
+
+### 8. AIOps Assistant (Iris) Integration
+**Success:** Deployed a Bedrock-powered agent named **Iris** to automate troubleshooting.
+*   **Implementation:**
+    *   Created 3 Lambda functions (`fetch-logs`, `fetch-metrics`, `fetch-health`) to act as Iris's tools.
+    *   Configured IRSA (IAM Roles for Service Accounts) for the Bedrock Agent.
+    *   Deployed a Streamlit UI for real-time interaction with the AIOps engine.
+*   **Verification:** Verified Iris can detect manual service outages (e.g., scaling `orders` to 0) and correlate them with cluster health metrics.
+
+---
+
+## 🧹 Project Lifecycle Finalization
+To ensure zero ongoing costs after successful verification, a full resource teardown was performed:
+1.  **AIOps Components:** Deleted Bedrock Agent, Lambda functions, and custom IAM roles.
+2.  **App Namespaces:** Uninstalled Helm releases and deleted Kubernetes namespaces.
+3.  **Infrastructure:** Executed `terraform destroy` to decommission EKS cluster, VPC, and ECR repositories.
+4.  **Final Sweep:** Manually verified deletion of CloudWatch Log Groups, EBS volumes, and ENIs.
+
 ---
 
 ## 🏆 Best Practices Implemented

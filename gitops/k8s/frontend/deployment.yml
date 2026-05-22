@@ -15,12 +15,12 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: 914194816156.dkr.ecr.us-east-1.amazonaws.com/frontend:3045ac30d0010897cfa94b88b8e55092913ac34d
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/frontend:latest
           ports:
             - containerPort: 3000
           env:
             - name: REACT_APP_API_URL
-              value: "http://gateway:3001/api"
+              value: "http://localhost:3001/api"
 ---
 apiVersion: v1
 kind: Service

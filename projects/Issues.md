@@ -34,7 +34,31 @@
   2. Apply the DB-restore Job
   3. If the Job fails initially, delete the DB-restore Job and reapply it after the PostgreSQL pod is ready
 
+### 2. Multi-Database Creation Failure
+- **Problem**: The application requires 4 distinct logical databases (`auth_db`, `products_db`, `orders_db`, `users_db`), but only the primary `postgres` database was initialized.
+- **Root Cause**: The standard PostgreSQL image doesn't support multiple database creation from a single environment variable.
+- **Solution**: Manually executed SQL creation commands via `kubectl exec` to provision all required logical databases before running the schema restore script.
+
 ---
+
+## Logging
+
+### 1. Fluent Bit "Unauthorized" & "No Credentials" Errors
+- **Problem**: Fluent Bit was failing to stream logs to CloudWatch despite having an IAM policy.
+- **Root Cause**: 
+    1. The IAM policy was missing from the EKS Node Role.
+    2. The pods were unable to access the EC2 Instance Metadata Service (IMDS) to retrieve credentials because of network isolation.
+- **Solution**: 
+    1. Attached `CloudWatchAgentServerPolicy` to the EKS node role.
+    2. Configured the Fluent Bit DaemonSet with `hostNetwork: true` to allow direct metadata access.
+
+---
+
+## AIOps
+
+### 1. Bedrock Agent Persona & Name Update
+- **Problem**: The AIOps assistant was initially named "Kira" but needed to be rebranded to "Iris".
+- **Solution**: Updated the system prompt in the `deploy.sh` script and the UI header/title in `app.py` to reflect the new "Iris" persona.
 
 ## Monitoring
 
