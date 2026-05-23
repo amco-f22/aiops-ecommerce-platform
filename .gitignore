@@ -39,3 +39,4 @@ tfplan*
 .env
 
 # Local only project
+.gemini/
