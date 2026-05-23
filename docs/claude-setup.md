@@ -12,7 +12,7 @@ In this project, Claude Code is used to:
 - Assist with Terraform and Kubernetes configuration
 - Query EKS clusters and troubleshoot pods
 - Interact with AWS services (ECR, EKS, Bedrock, pricing)
-- Help write and deploy the AIOps assistant (Kira)
+- Help write and deploy the AIOps assistant (Iris)
 
 ---
 

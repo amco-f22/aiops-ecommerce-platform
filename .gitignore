@@ -22,6 +22,9 @@ Thumbs.db
 *.tfstate
 *.tfstate.*
 .terraform/
+*.tfplan
+tfplan*
+.terraform.lock.hcl
 
 # Kubernetes
 *.kubeconfig

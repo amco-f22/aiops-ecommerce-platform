@@ -1,10 +1,10 @@
-# AIOps E-Commerce Platform
+# 🚀 AIOps E-Commerce Platform
 
 > An end-to-end DevOps and AIOps platform built around a microservices-based e-commerce application — covering local development, cloud infrastructure, CI/CD automation, GitOps delivery, observability, and AI-powered operations.
 
 ---
 
-## What I Built
+## 💡 What I Built
 
 This project demonstrates a production-grade DevOps pipeline from scratch. I designed and deployed a boutique e-commerce application composed of seven microservices, backed it with automated infrastructure provisioning, continuous integration, GitOps-based continuous delivery, full-stack observability, and an AI-powered operations assistant.
 
@@ -16,16 +16,16 @@ The goal was to build a system where a single code push flows through the entire
 
 | # | Workflow | What It Does |
 |---|----------|--------------|
-| 1 | **Local Development** | Full application stack running locally via Docker Compose for rapid testing |
-| 2 | **Infrastructure as Code** | One-command AWS provisioning (VPC, EKS, ECR, ArgoCD, Monitoring) using Terraform modules |
-| 3 | **CI/CD Pipeline** | GitHub Actions builds 7 Docker images in parallel and pushes them to ECR |
-| 4 | **GitOps Delivery** | ArgoCD watches the Git repository and auto-syncs cluster state on every manifest change |
-| 5 | **Observability** | Prometheus metrics collection + Grafana dashboards with pre-loaded panels for all services |
-| 6 | **AIOps** | AWS Bedrock-powered AI agent (Iris) for automated cluster troubleshooting |
+| 1 | 🐳 **Local Development** | Full application stack running locally via Docker Compose for rapid testing |
+| 2 | 🏗️ **Infrastructure as Code** | One-command AWS provisioning (VPC, EKS, ECR, ArgoCD, Monitoring) using Terraform modules |
+| 3 | ⚡ **CI/CD Pipeline** | GitHub Actions builds 7 Docker images in parallel and pushes them to ECR |
+| 4 | 🔄 **GitOps Delivery** | ArgoCD watches the Git repository and auto-syncs cluster state on every manifest change |
+| 5 | 📊 **Observability** | Prometheus metrics collection + Grafana dashboards with pre-loaded panels for all services |
+| 6 | 🤖 **AIOps** | AWS Bedrock-powered AI agent (Iris) for automated cluster troubleshooting |
 
 ---
 
-## Architecture
+## 🏛️ Architecture
 
 ### Application Architecture
 
@@ -117,7 +117,7 @@ ArgoCD (running inside EKS cluster)
 
 ---
 
-## Repository Structure
+## 📁 Repository Structure
 
 ```
 aiops-ecommerce-platform/
@@ -159,7 +159,7 @@ aiops-ecommerce-platform/
 
 ---
 
-## Tech Stack
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
@@ -176,9 +176,9 @@ aiops-ecommerce-platform/
 
 ---
 
-## How to Replicate This Project
+## 📋 How to Replicate This Project
 
-### Prerequisites
+### ✅ Prerequisites
 
 Make sure the following tools are installed and configured on your machine before starting:
 
@@ -194,7 +194,7 @@ Make sure the following tools are installed and configured on your machine befor
 
 ---
 
-### Phase 1 — Run Locally with Docker Compose
+### 🐳 Phase 1 — Run Locally with Docker Compose
 
 Before deploying anything to the cloud, validate the entire application stack locally. Docker Compose acts as a mini orchestrator for your laptop — it builds all the images, starts the containers in the correct dependency order, and wires them together on a shared network.
 
@@ -239,7 +239,7 @@ docker compose down
 
 ---
 
-### Phase 2 — Provision Cloud Infrastructure with Terraform
+### 🏗️ Phase 2 — Provision Cloud Infrastructure with Terraform
 
 With the application validated locally, provision the production infrastructure on AWS. All infrastructure is defined as Terraform modules — write once, deploy to any environment.
 
@@ -291,7 +291,7 @@ kubectl get nodes
 
 ---
 
-### Phase 3 — Deploy to Kubernetes
+### ☸️ Phase 3 — Deploy to Kubernetes
 
 Each microservice has a corresponding Kubernetes Deployment and Service manifest in the `gitops/k8s/` directory. A Kustomize configuration ensures all resources are applied in the correct order (secrets first, then database, then application services).
 
@@ -329,7 +329,7 @@ kubectl logs -n boutique -l job-name=boutique-db-restore
 
 ---
 
-### Phase 4 — Set Up the CI/CD Pipeline
+### ⚡ Phase 4 — Set Up the CI/CD Pipeline
 
 The GitHub Actions pipeline (`.github/workflows/ci.yml`) uses a **matrix strategy** to build all 7 microservices simultaneously in parallel runners. After all builds succeed, a second job updates the image tags in the Kubernetes manifests and commits the change back to the repository.
 
@@ -374,7 +374,7 @@ Each image is tagged with the Git commit SHA for full traceability. At any point
 
 ---
 
-### Phase 5 — Configure ArgoCD for GitOps
+### 🔄 Phase 5 — Configure ArgoCD for GitOps
 
 ArgoCD is already running inside the cluster (deployed by Terraform). It continuously monitors the `gitops/` directory in your GitHub repository. When the CI pipeline commits updated image tags, ArgoCD detects the change and automatically synchronizes the cluster state — no manual `kubectl apply` needed.
 
@@ -427,7 +427,7 @@ This ensures Git is always the single source of truth for what is running in pro
 
 ---
 
-### Phase 6 — Set Up Observability
+### 📊 Phase 6 — Set Up Observability
 
 #### Prometheus
 
@@ -483,7 +483,51 @@ Open http://localhost:8080 (username: `admin`)
 
 ---
 
-## Port Forwarding Quick Reference
+### 🤖 Phase 7 — AIOps with Iris
+
+This is where the project goes beyond traditional DevOps. Instead of manually digging through logs and dashboards when something breaks, I built an AI agent that does the investigation for you.
+
+**Iris** is an AIOps assistant powered by AWS Bedrock. It connects to three data sources — CloudWatch Logs, Prometheus metrics, and the EKS API — and performs root cause analysis like a senior SRE would during an incident.
+
+```
+Engineer: "Why are we seeing 503 errors?"
+         │
+         ▼
+┌─────────────────────────────┐
+│   Bedrock Agent (Iris)      │
+│   Foundation Model: Qwen 3  │
+└──────────┬──────────────────┘
+           │
+   ┌───────┼───────────┐
+   ▼       ▼           ▼
+ Logs    Metrics     Health
+(CloudWatch) (Prometheus) (EKS API)
+   │       │           │
+   └───────┼───────────┘
+           ▼
+  Root Cause + Evidence + Fix
+```
+
+**What Iris can do:**
+
+| Capability | Example |
+|------------|---------|
+| Error investigation | "Why are we seeing 503 errors in the last hour?" |
+| Resource analysis | "Is CPU or memory spiking on any service?" |
+| Database diagnostics | "Check database connection pool and latency" |
+| Pod health checks | "Are all pods healthy? Any crash-looping?" |
+| Incident triage | "The frontend is slow — help me diagnose" |
+
+**Demo:**
+
+https://github.com/user-attachments/assets/e6352c2c-cbf0-4349-878c-2c99b4e3079c
+
+**Setup:** See the full [Iris setup guide](projects/aiops-assistant/README.md) for step-by-step deployment instructions.
+
+---
+
+## 🔗 Port Forwarding Quick Reference
+
 
 Run all port-forwards at once:
 
@@ -505,45 +549,61 @@ kubectl port-forward svc/argocd-server 8443:443 -n argocd &
 
 ---
 
-## Issues I Encountered and How I Fixed Them
+## 🐛 Issues I Encountered and How I Fixed Them
 
-Building this project wasn't without challenges. Here are the real issues I ran into and how I resolved them:
+Building this project wasn't smooth sailing. Here are the real issues I hit during implementation and how I solved them:
 
 ### Node Group Pod Capacity
 
-**Problem:** Initially used `t3.medium` instances. When I scaled up the replicas and added the monitoring stack, pods started failing to schedule with "too many pods" errors.
+**Problem:** After adding the monitoring stack alongside the 7 microservices, pods started failing to schedule — "too many pods" errors everywhere.
 
-**Root Cause:** `t3.medium` (2 vCPU, 4 GB RAM) supports a maximum of 17 pods. The default namespace already consumed slots, and with monitoring + application pods, the limit was exceeded.
+**Root Cause:** `t3.medium` supports a max of 17 pods per node. Between the default namespace pods, 7 app pods, ArgoCD, and the full Prometheus + Grafana stack, the limit was breached.
 
 **Fix:** Upgraded to `m7i-flex.large` which supports significantly more pods per node.
 
 ### EBS Volume Permissions
 
-**Problem:** The EBS CSI driver failed to attach volumes to the cluster.
+**Problem:** PostgreSQL StatefulSet pods stuck in `Pending` — the EBS CSI driver couldn't attach volumes.
 
-**Root Cause:** Kubernetes versions above 1.32 on EKS require IRSA (IAM Roles for Service Accounts) for the EBS CSI driver. Standard IAM roles alone are not sufficient.
+**Root Cause:** EKS v1.32+ requires IRSA (IAM Roles for Service Accounts) for the EBS CSI driver. Standard node-level IAM roles are no longer sufficient.
 
 **Fix:** Configured an OIDC provider and IRSA policy in the EKS Terraform module for the `ebs-csi-controller-sa` service account.
 
-### Database Init Script Skipped
+### Database Init Script Silently Skipped
 
-**Problem:** PostgreSQL StatefulSet had an init script with the full database dump, but it was being silently skipped. The pods ran fine but the `products_db` didn't exist.
+**Problem:** PostgreSQL pods were running fine, no errors — but the `products_db` didn't exist. The product-service was returning empty responses.
 
-**Root Cause:** Fresh EBS volumes contain a `lost+found` directory. PostgreSQL detects this as a non-empty data directory and skips initialization entirely.
+**Root Cause:** Fresh EBS volumes in AWS come with a `lost+found` directory. PostgreSQL's entrypoint detects this as a non-empty data directory and silently skips all initialization scripts.
 
-**Fix:** Created a separate Kubernetes Job (`restore-job.yml`) to load the database after the PostgreSQL pod is fully running.
+**Fix:** Created a separate Kubernetes Job (`restore-job.yml`) that runs after the database pod is ready and loads the schema via `psql`.
 
-### Helm Chart Caching Issue on Terraform Plan
+### GitHub Actions Failing to Push Manifest Updates
 
-**Problem:** Running `terraform plan` failed with "Unable to locate chart" errors for `argo-cd` and `kube-prometheus-stack`.
+**Problem:** The CI pipeline built all 7 images successfully, but the `update-manifests` job failed silently — no manifest changes were committed back.
 
-**Root Cause:** A corrupted local Helm repository cache. The `open-telemetry-index.yaml` file was missing, which crashed the Helm client's cache lookup for all charts.
+**Root Cause:** `GITHUB_TOKEN` defaults to **read-only** permissions. The `git push` was silently rejected.
 
-**Fix:** Running `helm repo update` refreshed all local repository index files.
+**Fix:** Repository Settings → Actions → General → Workflow permissions → **Read and write permissions**.
+
+### Fluent Bit Failing to Ship Logs
+
+**Problem:** Fluent Bit DaemonSet was running, but zero logs appeared in CloudWatch. Pods were logging "unauthorized" and "no credentials found".
+
+**Root Cause:** Two stacked issues: (1) `CloudWatchAgentServerPolicy` wasn't attached to the EKS node role, and (2) pods couldn't reach the EC2 Instance Metadata Service due to network isolation.
+
+**Fix:** Attached the policy to the node IAM role + added `hostNetwork: true` to the Fluent Bit DaemonSet.
+
+### Application Metrics Missing from Grafana
+
+**Problem:** Cluster-level metrics worked fine, but custom app metrics (HTTP rates, latency, error counts) were completely absent.
+
+**Root Cause:** The ServiceMonitor labels didn't match the actual service labels, and the gateway Service wasn't exposing the `/metrics` port.
+
+**Fix:** Corrected the ServiceMonitor `matchLabels` and added the metrics port to the gateway Service definition.
 
 ---
 
-## Cleanup
+## 🧹 Cleanup
 
 To tear down all cloud resources and avoid ongoing AWS charges:
 
@@ -556,7 +616,7 @@ This removes the EKS cluster, node groups, VPC, ECR repositories, and everything
 
 ---
 
-## Documentation
+## 📚 Documentation
 
 | Document | Description |
 |----------|-------------|

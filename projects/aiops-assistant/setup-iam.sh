@@ -140,7 +140,7 @@ else
   aws iam create-role \
     --role-name "$AGENT_ROLE_NAME" \
     --assume-role-policy-document "$BEDROCK_TRUST_POLICY" \
-    --description "Role for Bedrock Agent - AIOps assistant (Kira)" \
+    --description "Role for Bedrock Agent - AIOps assistant (Iris)" \
     --query 'Role.RoleName' --output text
   echo "  ✓ Created: $AGENT_ROLE_NAME"
 fi

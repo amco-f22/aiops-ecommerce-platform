@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionEnd": [
+      {
+        "matcher": "exit",
+        "hooks": [
+          {
+            "name": "telegram-alert",
+            "type": "command",
+            "command": "powershell.exe -ExecutionPolicy Bypass -File .gemini/hooks/notify_telegram.ps1"
+          }
+        ]
+      }
+    ]
+  }
+}

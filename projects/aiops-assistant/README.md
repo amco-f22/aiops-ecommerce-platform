@@ -1,34 +1,113 @@
-# AIOps Assistant — Kira
+# 🔍 Iris — AIOps Assistant
 
-An AI-powered SRE assistant built on AWS Bedrock Agent. Kira diagnoses production incidents by querying CloudWatch Logs, CloudWatch Metrics (via Prometheus), and EKS cluster health — then responds with root cause, evidence, and fix recommendations.
+> An AI-powered SRE agent built on **AWS Bedrock** that diagnoses production incidents in real time. Iris queries CloudWatch Logs, Prometheus metrics, and EKS cluster health — then responds with root cause analysis, evidence, and fix recommendations.
+
+## Demo
+
+https://github.com/user-attachments/assets/e6352c2c-cbf0-4349-878c-2c99b4e3079c
+
+---
+
+## How Iris Works
+
+When an engineer asks "Why are we seeing 503 errors?", Iris doesn't guess — it investigates like a senior SRE:
+
+```
+Engineer asks a question
+         │
+         ▼
+┌──────────────────────────────┐
+│     Bedrock Agent (Iris)     │
+│  Foundation Model: Qwen 3   │
+│  Instruction: SRE persona   │
+└──────────┬───────────────────┘
+           │
+   ┌───────┼───────────┐
+   │       │           │
+   ▼       ▼           ▼
+┌──────┐ ┌──────┐ ┌──────────┐
+│ Logs │ │Metrics│ │  Health  │
+│Lambda│ │Lambda │ │  Lambda  │
+└──┬───┘ └──┬───┘ └────┬─────┘
+   │        │          │
+   ▼        ▼          ▼
+CloudWatch  Prometheus  EKS API
+  Logs      (via ELB)   (cluster,
+                        nodes, pods)
+```
+
+**The investigation flow:**
+
+1. **Understand the symptom** — Parse the engineer's question to identify what's broken
+2. **Form a hypothesis** — Based on experience (system prompt), decide which data sources to query
+3. **Gather evidence** — Call one or more Lambda functions to pull logs, metrics, and health data
+4. **Correlate** — Cross-reference findings across all three data sources
+5. **Respond** — Deliver root cause, supporting evidence, immediate fix, and prevention steps
+
+Iris never responds with generic advice. Every conclusion is backed by specific log entries, metric values, or pod status readings.
 
 ---
 
 ## Architecture
 
+### Components
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **Chat UI** | Streamlit (Python) | Terminal-style interface for interacting with Iris |
+| **AI Engine** | AWS Bedrock Agent | Orchestrates tool calls and generates responses using a foundation model |
+| **Foundation Model** | Qwen 3 (32B) | Language model that powers Iris's reasoning |
+| **fetch_logs** | AWS Lambda (Python) | Queries CloudWatch Logs using `FilterLogEvents` |
+| **fetch_metrics** | AWS Lambda (Python) | Queries Prometheus via HTTP for CPU, memory, latency, error rates |
+| **fetch_health** | AWS Lambda (Python) | Calls EKS API for cluster, node group, and pod health status |
+| **Action Schemas** | OpenAPI JSON | Defines the input/output contract for each Lambda so Bedrock knows when and how to call them |
+
+### Data Flow
+
 ```
-Streamlit UI (app.py)
-      │
-      ▼
-Bedrock Agent (Kira)
-      │
-      ├── fetch_logs         → CloudWatch Logs
-      ├── fetch_metrics      → Prometheus (ELB endpoint)
-      └── fetch_service_health → EKS cluster + node groups
+┌─────────────────────────────────────────────────────────────┐
+│                     Streamlit UI (app.py)                    │
+│  ┌─────────────────────────────────────────────────────┐    │
+│  │  Engineer: "Why are we seeing 503 errors?"          │    │
+│  └────────────────────────┬────────────────────────────┘    │
+│                           │ invoke_agent()                   │
+└───────────────────────────┼─────────────────────────────────┘
+                            ▼
+┌─────────────────────────────────────────────────────────────┐
+│                  AWS Bedrock Agent (Iris)                    │
+│                                                             │
+│  System Prompt: "You are Iris, a senior SRE with 12 years   │
+│  of experience..."                                          │
+│                                                             │
+│  ┌─────────┐  ┌──────────┐  ┌───────────────┐             │
+│  │fetch_logs│  │fetch_    │  │fetch_service_ │             │
+│  │         │  │metrics   │  │health         │             │
+│  └────┬────┘  └────┬─────┘  └──────┬────────┘             │
+└───────┼────────────┼───────────────┼────────────────────────┘
+        │            │               │
+        ▼            ▼               ▼
+   CloudWatch    Prometheus      EKS API
+     Logs        (via ELB)    (DescribeCluster,
+                              ListNodegroups,
+                              DescribeNodegroup)
 ```
 
 ---
 
 ## Prerequisites
 
-- AWS account with access to Bedrock (model access enabled for your chosen model)
-- EKS cluster running with Prometheus exposed via a LoadBalancer service
-- AWS CLI configured (`aws configure`)
-- Python 3.10+
+| Requirement | Details |
+|-------------|---------|
+| AWS Account | Bedrock model access enabled for your chosen foundation model |
+| EKS Cluster | Running with Prometheus exposed via a LoadBalancer service |
+| AWS CLI | Configured with `aws configure` (credentials that can access Bedrock, Lambda, EKS, CloudWatch) |
+| Python | 3.10 or higher |
 
 ---
 
-## Step 1: Set Up IAM Roles
+## Setup Guide
+
+### Step 1 — Create IAM Roles
 
 Run the provided script to create both required IAM roles:
 
@@ -37,16 +116,16 @@ chmod +x setup-iam.sh
 ./setup-iam.sh
 ```
 
-This creates:
+This creates two roles:
 
 | Role | Used By | Permissions |
 |------|---------|-------------|
 | `aiops-lambda-role` | All 3 Lambda functions | CloudWatch Logs read, EKS describe, Lambda basic execution |
-| `aiops-bedrock-agent-role` | Bedrock Agent | Invoke the 3 Lambda functions, invoke Bedrock models |
+| `aiops-bedrock-agent-role` | Bedrock Agent | Invoke the 3 Lambda functions, invoke Bedrock foundation models |
 
 ---
 
-## Step 2: Create the Lambda Functions
+### Step 2 — Create Lambda Functions
 
 Create the following 3 Lambda functions in the AWS Console (or via CLI). Use the code from the `lambda/` directory.
 
@@ -56,13 +135,13 @@ Create the following 3 Lambda functions in the AWS Console (or via CLI). Use the
 | `aiops-fetch-metrics` | `lambda/fetch_metrics/lambda_function.py` | `aiops-lambda-role` |
 | `aiops-fetch-health` | `lambda/fetch_health/lambda_function.py` | `aiops-lambda-role` |
 
-Runtime: **Python 3.12** | Timeout: **30 seconds**
+**Runtime:** Python 3.12 | **Timeout:** 30 seconds
 
 ---
 
-## Step 3: Update the Prometheus URL
+### Step 3 — Configure Prometheus URL
 
-Both `fetch_metrics` and `fetch_health` lambdas query Prometheus directly. Update the `PROMETHEUS_URL` placeholder in each file before uploading the code.
+Both `fetch_metrics` and `fetch_health` query Prometheus directly via HTTP. Update the `PROMETHEUS_URL` placeholder in each Lambda before uploading.
 
 In `lambda/fetch_metrics/lambda_function.py`:
 ```python
@@ -74,49 +153,53 @@ In `lambda/fetch_health/lambda_function.py`:
 PROMETHEUS_URL = "http://<YOUR_PROMETHEUS_ELB_URL>:9090"
 ```
 
-To get the Prometheus ELB URL, expose Prometheus as a LoadBalancer service:
+**How to get the Prometheus ELB URL:**
 
 ```bash
+# Expose Prometheus as a LoadBalancer
 kubectl patch svc kube-prometheus-stack-prometheus -n monitoring \
   -p '{"spec": {"type": "LoadBalancer"}}'
 
+# Get the external URL
 kubectl get svc kube-prometheus-stack-prometheus -n monitoring
 # Copy the EXTERNAL-IP value — that is your ELB URL
 ```
 
+> **Security Note:** The Prometheus ELB is publicly accessible on port 9090. For production, restrict access using Security Groups to only allow traffic from the Lambda function's VPC/NAT gateway IP. For this demo project, we leave it open for simplicity.
+
 ---
 
-## Step 4: Deploy the Bedrock Agent
-
-Run the deploy script. It will:
-- Verify the Lambda functions and IAM role exist
-- Set Lambda timeouts to 30s and add Bedrock invoke permissions
-- Create the Bedrock Agent (`aiops-assistant`) with the Kira system prompt
-- Attach all 3 action groups with their OpenAPI schemas
-- Prepare the agent
+### Step 4 — Deploy the Bedrock Agent
 
 ```bash
 chmod +x deploy.sh
 ./deploy.sh
 ```
 
-At the end, the script prints your **Agent ID** — keep it for the next step.
+The script will:
+1. Verify the Lambda functions and IAM role exist
+2. Set Lambda timeouts to 30s and add Bedrock invoke permissions
+3. Create the Bedrock Agent (`aiops-assistant`) with the Iris system prompt
+4. Attach all 3 action groups with their OpenAPI schemas
+5. Prepare the agent for use
+
+At the end, the script prints your **Agent ID** — save it for the next step.
 
 ---
 
-## Step 5: (Optional) Generate Sample Data
+### Step 5 — (Optional) Generate Sample Data
 
-Populate CloudWatch Logs with realistic error scenarios to test Kira:
+Populate CloudWatch Logs with realistic error scenarios to test Iris:
 
 ```bash
 python3 scripts/generate_sample_data.py --region us-east-1
 ```
 
-This writes 100 realistic log events (503 errors, OOM kills, connection pool exhaustion, etc.) to `/app/production`.
+This writes 100 realistic log events to `/app/production` — including 503 errors, OOM kills, connection pool exhaustion, and timeout patterns that Iris can investigate.
 
 ---
 
-## Step 6: Run the Streamlit UI
+### Step 6 — Run the Streamlit UI
 
 ```bash
 cp .env.example .env
@@ -150,36 +233,40 @@ Open **http://localhost:8501** in your browser.
 
 ```
 aiops-assistant/
-├── app.py                  # Streamlit chat UI
-├── deploy.sh               # Bedrock Agent deployment script
+├── app.py                  # Streamlit chat UI with dark terminal theme
+├── deploy.sh               # Bedrock Agent deployment automation
 ├── setup-iam.sh            # IAM roles and policies setup
-├── requirements.txt        # Python dependencies
+├── requirements.txt        # Python dependencies (streamlit, boto3)
 ├── .env.example            # Environment variable template
 ├── lambda/
-│   ├── fetch_logs/         # CloudWatch Logs query
-│   ├── fetch_metrics/      # Prometheus metrics query
-│   └── fetch_health/       # EKS cluster health check
+│   ├── fetch_logs/         # CloudWatch Logs query (FilterLogEvents)
+│   ├── fetch_metrics/      # Prometheus metrics query (PromQL via HTTP)
+│   └── fetch_health/       # EKS cluster + node group health check
 ├── schemas/
-│   ├── fetch_logs.json     # OpenAPI schema for fetch_logs
-│   ├── fetch_metrics.json  # OpenAPI schema for fetch_metrics
-│   └── fetch_health.json   # OpenAPI schema for fetch_health
+│   ├── fetch_logs.json     # OpenAPI schema for fetch_logs action group
+│   ├── fetch_metrics.json  # OpenAPI schema for fetch_metrics action group
+│   └── fetch_health.json   # OpenAPI schema for fetch_health action group
 └── scripts/
-    └── generate_sample_data.py  # Seed CloudWatch with test errors
+    └── generate_sample_data.py  # Seed CloudWatch with realistic test errors
 ```
 
 ---
 
-## Sample Questions to Ask Kira
+## Sample Questions to Ask Iris
 
-- Why are we seeing 503 errors in the last hour?
-- Is CPU usage high across the boutique services?
-- Check database connections and latency
-- Are all pods healthy? Any restarts?
-- What are the most frequent errors in the last 2 hours?
+| Category | Question |
+|----------|----------|
+| **Error Investigation** | "Why are we seeing 503 errors in the last hour?" |
+| **Resource Utilization** | "Is CPU usage high across the boutique services?" |
+| **Database Health** | "Check database connections and latency" |
+| **Pod Health** | "Are all pods healthy? Any restarts?" |
+| **Log Analysis** | "What are the most frequent errors in the last 2 hours?" |
+| **Memory Issues** | "Is there a memory leak in any service?" |
+| **Incident Triage** | "The frontend is slow — help me diagnose" |
 
 ---
 
-## Potential Issues
+## Troubleshooting
 
 ### Bedrock model access not enabled
 The deploy script will fail at agent creation if model access hasn't been requested. Go to **AWS Console → Bedrock → Model access** and enable access for the model used in `deploy.sh` before running the script.

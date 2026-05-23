@@ -18,7 +18,7 @@ flowchart LR
     F --> G[EKS Cluster]
     G --> H[Prometheus + Grafana]
     H --> I[CloudWatch Logs]
-    I --> J[Kira — AIOps Agent]
+    I --> J[Iris — AIOps Agent]
 ```
 
 ---
@@ -231,14 +231,14 @@ flowchart LR
 
 ---
 
-## Stage 7: AIOps — Kira (Bedrock Agent)
+## Stage 7: AIOps — Iris (Bedrock Agent)
 
-This is where the workflow goes beyond traditional DevOps. When something goes wrong in production, instead of manually digging through logs and metrics, you ask Kira.
+This is where the workflow goes beyond traditional DevOps. When something goes wrong in production, instead of manually digging through logs and metrics, you ask Iris.
 
 ```mermaid
 flowchart TD
     Incident[Incident detected\nor engineer asks a question] --> UI[Streamlit UI\napp.py]
-    UI --> Agent[Bedrock Agent\nKira]
+    UI --> Agent[Bedrock Agent\nIris]
 
     Agent --> |Hypothesis: check logs| FL[Lambda: fetch_logs\nCloudWatch Logs]
     Agent --> |Hypothesis: check metrics| FM[Lambda: fetch_metrics\nPrometheus API]
@@ -252,37 +252,37 @@ flowchart TD
     UI --> Engineer[Engineer sees:\n- Root cause\n- Evidence from logs/metrics\n- Immediate fix\n- Prevention steps]
 ```
 
-**How Kira investigates:**
+**How Iris investigates:**
 
 ```mermaid
 sequenceDiagram
     participant Eng as Engineer
-    participant Kira as Kira (Bedrock Agent)
+    participant Iris as Iris (Bedrock Agent)
     participant Logs as fetch_logs (Lambda)
     participant Metrics as fetch_metrics (Lambda)
     participant Health as fetch_health (Lambda)
 
-    Eng->>Kira: "Why are we seeing 503 errors?"
-    Note over Kira: Step 1: Understand the symptom
-    Note over Kira: Step 2: Form a hypothesis
-    Kira->>Logs: Search for 503 errors in last hour
-    Logs-->>Kira: 47 entries — all from order-service
-    Kira->>Health: Check order-service pod health
-    Health-->>Kira: 0/1 replicas available — pod crash-looping
-    Kira->>Metrics: Check order-service memory last 30m
-    Metrics-->>Kira: Memory spiked to 512MB, OOM kill at 22:14
-    Note over Kira: Step 4: Correlate evidence
-    Kira->>Eng: Root cause: OOM kill at 22:14 due to memory spike.\nEvidence: logs show 503s starting at 22:14, pod restarting,\nmetrics confirm memory exceeded limit.\nFix: Increase memory limit in orders.yml to 768Mi.\nPrevention: Add VPA + memory alerting rule.
+    Eng->>Iris: "Why are we seeing 503 errors?"
+    Note over Iris: Step 1: Understand the symptom
+    Note over Iris: Step 2: Form a hypothesis
+    Iris->>Logs: Search for 503 errors in last hour
+    Logs-->>Iris: 47 entries — all from order-service
+    Iris->>Health: Check order-service pod health
+    Health-->>Iris: 0/1 replicas available — pod crash-looping
+    Iris->>Metrics: Check order-service memory last 30m
+    Metrics-->>Iris: Memory spiked to 512MB, OOM kill at 22:14
+    Note over Iris: Step 4: Correlate evidence
+    Iris->>Eng: Root cause: OOM kill at 22:14 due to memory spike.\nEvidence: logs show 503s starting at 22:14, pod restarting,\nmetrics confirm memory exceeded limit.\nFix: Increase memory limit in orders.yml to 768Mi.\nPrevention: Add VPA + memory alerting rule.
 ```
 
-**The Kira workflow:**
+**The Iris workflow:**
 1. Engineer describes a symptom
-2. Kira forms a hypothesis
+2. Iris forms a hypothesis
 3. Gathers evidence using the 3 Lambda tools (logs, metrics, health)
 4. Correlates data across all three sources
 5. Returns root cause, supporting evidence, immediate fix, and prevention steps
 
-**Kira never guesses.** Every conclusion is backed by specific log entries or metric values.
+**Iris never guesses.** Every conclusion is backed by specific log entries or metric values.
 
 ---
 
@@ -300,9 +300,9 @@ flowchart TD
     EKS -->|pod logs| FB[Fluent Bit]
     Prom --> Grafana[Grafana\nDashboards]
     FB --> CW[CloudWatch\nLog Groups]
-    Grafana -->|anomaly detected| Kira[Kira — AIOps Agent\nBedrock + Lambda]
-    CW --> Kira
-    Kira -->|root cause + fix| Eng[👩‍💻 Engineer]
+    Grafana -->|anomaly detected| Iris[Iris — AIOps Agent\nBedrock + Lambda]
+    CW --> Iris
+    Iris -->|root cause + fix| Eng[👩‍💻 Engineer]
 
     subgraph IaC [Infrastructure as Code]
         TF[Terraform\nVPC + EKS + ECR + Helm]
@@ -323,4 +323,4 @@ flowchart TD
 | `gitops/k8s/` | Stage 5 | All Kubernetes manifests |
 | `gitops/k8s/backend/service-monitor.yml` | Stage 6 | Prometheus scrape config |
 | `gitops/k8s/grafana-dashboard.yml` | Stage 6 | Pre-loaded Grafana dashboard |
-| `projects/aiops-assistant/` | Stage 7 | Kira — AIOps Bedrock Agent |
+| `projects/aiops-assistant/` | Stage 7 | Iris — AIOps Bedrock Agent |
